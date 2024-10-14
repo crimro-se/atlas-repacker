@@ -28,9 +28,12 @@ func TestPack(t *testing.T) {
 	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
 	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 20)})
 	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 30, 30)})
-	PackBoxes(boxes, 170, 200, 4)
+	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 50, 50)})
+	//fmt.Println(PackBoxes(boxes, 100, 40, 1, 0))
+	ab, unp := PackAllBoxes(boxes, 100, 40, 1, 0)
+	fmt.Println(unp)
 
-	img := DrawRects(boxes, 170, 200)
+	img := DrawRects(ab[0], 100, 40)
 	file, err := os.Create("test.png")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
