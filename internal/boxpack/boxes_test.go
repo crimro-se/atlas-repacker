@@ -35,12 +35,7 @@ func TestPack(t *testing.T) {
 	img := DrawRects(ab[0], 100, 40)
 
 	// test ability to find box in img
-	//visited := make(map[image.Point]bool)
-	visited := NewVisitedArray(img.Bounds())
-	fmt.Println(findConnectedPixels(img, 0, 0, false, visited))
-	for i := 0; i < 100; i++ {
-		//fmt.Println(visited.At(i, 1))
-	}
+	fmt.Println(ImageToBoxes(img))
 
 	file, err := os.Create("test.png")
 	if err != nil {

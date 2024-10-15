@@ -78,27 +78,36 @@ type Box struct {
 	wasPacked  bool            // true if this box has been successfully packed
 }
 
-// identifies pixel islands in an image
-/*
+// identifies pixel islands in images
 func ImagesToBoxes(images []image.Image) []Box {
 	boxes := make([]Box, 0)
 	var i int
 	for _, img := range images {
-
+		visited := newVisitedArray(img.Bounds())
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			for y := 0; y < img.Bounds().Dy(); y++ {
+				if !visited.get(x, y) && isVisiblePixel(img, x, y) {
+					rect := findConnectedPixels(img, x, y, true, visited)
+					var b Box
+					b.sourceRect = rect
+					b.imgSrc = i
+					boxes = append(boxes, b)
+				}
+			}
+		}
 		i++
 	}
 	return boxes
 }
 
-
+// identifies pixel islands in an image
 func ImageToBoxes(img image.Image) []Box {
 	images := make([]image.Image, 0, 1)
 	images = append(images, img)
 	return ImagesToBoxes(images)
 }
-*/
 
-// given an image and a starting pixel, finds all connected pixels and returns a square encompassing them.
+// Given an image and a starting pixel, finds all connected pixels and returns a square encompassing them.
 // 'visited' is used to track progress.
 // the diagonal flag enables checking diagonally connected pixels.
 func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visitedArray) image.Rectangle {
@@ -114,7 +123,7 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 	for len(stack) > 0 {
 		point := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		visited.Set(point.X, point.Y, true)
+		visited.set(point.X, point.Y, true)
 		minX = min(minX, point.X)
 		minY = min(minY, point.Y)
 		maxX = max(maxX, point.X)
@@ -124,11 +133,10 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 			if !pt.In(bounds) {
 				return
 			}
-			if visited.Get(pt.X, pt.Y) {
+			if visited.get(pt.X, pt.Y) {
 				return
 			}
-			_, _, _, a := img.At(pt.X, pt.Y).RGBA()
-			if a > 0 {
+			if isVisiblePixel(img, pt.X, pt.Y) {
 				stack = append(stack, pt)
 			}
 		}
@@ -144,13 +152,18 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 	return image.Rect(minX, minY, maxX, maxY)
 }
 
-/* Originally used an Image.Grey to track visited pixels, however it involves too much abstraction and indirection. */
+func isVisiblePixel(img image.Image, x, y int) bool {
+	_, _, _, a := img.At(x, y).RGBA()
+	return a > 0
+}
+
+/* Originally used an Image.Grey to track visited pixels, however the interface involves too much indirection */
 type visitedArray struct {
 	data []bool
 	w, h int
 }
 
-func NewVisitedArray(bounds image.Rectangle) visitedArray {
+func newVisitedArray(bounds image.Rectangle) visitedArray {
 	var va visitedArray
 	va.w = bounds.Dx()
 	va.h = bounds.Dy()
@@ -158,11 +171,13 @@ func NewVisitedArray(bounds image.Rectangle) visitedArray {
 	return va
 }
 
-func (va *visitedArray) Get(x, y int) bool {
+// nb: no parameter boundary validation
+func (va *visitedArray) get(x, y int) bool {
 	return va.data[y*va.w+x]
 }
 
-func (va *visitedArray) Set(x, y int, v bool) {
+// nb: no parameter boundary validation
+func (va *visitedArray) set(x, y int, v bool) {
 	va.data[y*va.w+x] = v
 }
 
