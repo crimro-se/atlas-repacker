@@ -30,13 +30,17 @@ func TestPack(t *testing.T) {
 	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 30, 30)})
 	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 50, 50)})
 	//fmt.Println(PackBoxes(boxes, 100, 40, 1, 0))
-	ab, unp := PackAllBoxes(boxes, 100, 40, 1, 0)
-	fmt.Println(unp)
+	ab, _ := PackAllBoxes(boxes, 100, 40, 1, 0)
 
 	img := DrawRects(ab[0], 100, 40)
 
 	// test ability to find box in img
-	fmt.Println(findConnectedPixel(img, 0, 0))
+	//visited := make(map[image.Point]bool)
+	visited := NewVisitedArray(img.Bounds())
+	fmt.Println(findConnectedPixels(img, 0, 0, false, visited))
+	for i := 0; i < 100; i++ {
+		//fmt.Println(visited.At(i, 1))
+	}
 
 	file, err := os.Create("test.png")
 	if err != nil {

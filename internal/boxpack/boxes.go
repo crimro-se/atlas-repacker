@@ -67,6 +67,8 @@ import "C"
 import (
 	"image"
 	"unsafe"
+
+	"golang.org/x/exp/constraints"
 )
 
 type Box struct {
@@ -96,9 +98,11 @@ func ImageToBoxes(img image.Image) []Box {
 }
 */
 
-func findConnectedPixel(img image.Image, x, y int) image.Rectangle {
+// given an image and a starting pixel, finds all connected pixels and returns a square encompassing them.
+// 'visited' is used to track progress.
+// the diagonal flag enables checking diagonally connected pixels.
+func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visitedArray) image.Rectangle {
 	bounds := img.Bounds()
-	visited := make(map[image.Point]bool)
 	stack := []image.Point{{X: x, Y: y}}
 
 	var minX, minY, maxX, maxY int
@@ -110,15 +114,17 @@ func findConnectedPixel(img image.Image, x, y int) image.Rectangle {
 	for len(stack) > 0 {
 		point := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		visited[point] = true
+		visited.Set(point.X, point.Y, true)
 		minX = min(minX, point.X)
 		minY = min(minY, point.Y)
 		maxX = max(maxX, point.X)
 		maxY = max(maxY, point.Y)
 
-		var testPoint image.Point
 		pointCheck := func(pt image.Point) {
-			if pt.In(bounds) && !visited[pt] {
+			if !pt.In(bounds) {
+				return
+			}
+			if !visited.Get(pt.X, pt.Y) {
 				_, _, _, a := img.At(pt.X, pt.Y).RGBA()
 				if a > 0 {
 					stack = append(stack, pt)
@@ -127,12 +133,43 @@ func findConnectedPixel(img image.Image, x, y int) image.Rectangle {
 		}
 		for xOff := -1; xOff <= 1; xOff++ {
 			for yOff := -1; yOff <= 1; yOff++ {
-				testPoint = image.Point{point.X + xOff, point.Y + yOff}
-				pointCheck(testPoint)
+				if abs(xOff)+abs(yOff) == 2 && !diagonal {
+					continue
+				}
+				pointCheck(image.Point{point.X + xOff, point.Y + yOff})
 			}
 		}
 	}
 	return image.Rect(minX, minY, maxX, maxY)
+}
+
+/* Originally used an Image.Grey to track visited pixels, however it involves too much abstraction and indirection. */
+type visitedArray struct {
+	data []bool
+	w, h int
+}
+
+func NewVisitedArray(bounds image.Rectangle) visitedArray {
+	var va visitedArray
+	va.w = bounds.Dx()
+	va.h = bounds.Dy()
+	va.data = make([]bool, va.w*va.h)
+	return va
+}
+
+func (va *visitedArray) Get(x, y int) bool {
+	return va.data[y*va.w+x]
+}
+
+func (va *visitedArray) Set(x, y int, v bool) {
+	va.data[y*va.w+x] = v
+}
+
+func abs[T constraints.Integer](x T) T {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // Packs boxes, with multiple output sheets. Input slice isn't modified.
