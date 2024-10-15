@@ -173,12 +173,12 @@ func newVisitedArray(bounds image.Rectangle) visitedArray {
 
 // nb: no parameter boundary validation
 func (va *visitedArray) get(x, y int) bool {
-	return va.data[y*va.w+x]
+	return va.data[(y*va.w)+x]
 }
 
 // nb: no parameter boundary validation
 func (va *visitedArray) set(x, y int, v bool) {
-	va.data[y*va.w+x] = v
+	va.data[(y*va.w)+x] = v
 }
 
 func abs[T constraints.Integer](x T) T {
