@@ -124,11 +124,12 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 			if !pt.In(bounds) {
 				return
 			}
-			if !visited.Get(pt.X, pt.Y) {
-				_, _, _, a := img.At(pt.X, pt.Y).RGBA()
-				if a > 0 {
-					stack = append(stack, pt)
-				}
+			if visited.Get(pt.X, pt.Y) {
+				return
+			}
+			_, _, _, a := img.At(pt.X, pt.Y).RGBA()
+			if a > 0 {
+				stack = append(stack, pt)
 			}
 		}
 		for xOff := -1; xOff <= 1; xOff++ {
