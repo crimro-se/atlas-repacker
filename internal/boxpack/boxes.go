@@ -1,5 +1,5 @@
 // package to make stb_rect_pack.h usable in Go.
-package boxes
+package boxpack
 
 /*
 	#define STB_RECT_PACK_IMPLEMENTATION
@@ -76,10 +76,69 @@ type Box struct {
 	wasPacked  bool            // true if this box has been successfully packed
 }
 
+// identifies pixel islands in an image
+/*
+func ImagesToBoxes(images []image.Image) []Box {
+	boxes := make([]Box, 0)
+	var i int
+	for _, img := range images {
+
+		i++
+	}
+	return boxes
+}
+
+
+func ImageToBoxes(img image.Image) []Box {
+	images := make([]image.Image, 0, 1)
+	images = append(images, img)
+	return ImagesToBoxes(images)
+}
+*/
+
+func findConnectedPixel(img image.Image, x, y int) image.Rectangle {
+	bounds := img.Bounds()
+	visited := make(map[image.Point]bool)
+	stack := []image.Point{{X: x, Y: y}}
+
+	var minX, minY, maxX, maxY int
+	minX = x
+	maxX = x
+	minY = y
+	maxY = y
+
+	for len(stack) > 0 {
+		point := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		visited[point] = true
+		minX = min(minX, point.X)
+		minY = min(minY, point.Y)
+		maxX = max(maxX, point.X)
+		maxY = max(maxY, point.Y)
+
+		var testPoint image.Point
+		pointCheck := func(pt image.Point) {
+			if pt.In(bounds) && !visited[pt] {
+				_, _, _, a := img.At(pt.X, pt.Y).RGBA()
+				if a > 0 {
+					stack = append(stack, pt)
+				}
+			}
+		}
+		for xOff := -1; xOff <= 1; xOff++ {
+			for yOff := -1; yOff <= 1; yOff++ {
+				testPoint = image.Point{point.X + xOff, point.Y + yOff}
+				pointCheck(testPoint)
+			}
+		}
+	}
+	return image.Rect(minX, minY, maxX, maxY)
+}
+
 // Packs boxes, with multiple output sheets. Input slice isn't modified.
 // boxMargin - additinal padding to provide each box in total, pixels.
 // offset - ammount to offset each box. useful values are half of margin, =margin, or zero.
-// returns result and count of any remaining unpacked (size with margin > W or H)
+// returns result and count of any remaining unpacked (size+margin > W or H)
 func PackAllBoxes(boxesImmutable []Box, W, H, boxMargin, offset int) ([][]Box, int) {
 	allBoxes := make([][]Box, 0)
 	boxes := make([]Box, len(boxesImmutable)) // working copy

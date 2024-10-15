@@ -1,4 +1,4 @@
-package boxes
+package boxpack
 
 import (
 	"fmt"
@@ -34,6 +34,10 @@ func TestPack(t *testing.T) {
 	fmt.Println(unp)
 
 	img := DrawRects(ab[0], 100, 40)
+
+	// test ability to find box in img
+	fmt.Println(findConnectedPixel(img, 0, 0))
+
 	file, err := os.Create("test.png")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
