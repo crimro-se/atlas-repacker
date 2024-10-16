@@ -14,9 +14,9 @@ import (
 )
 
 type myFlags struct {
-	outputFileName               string
-	checkDiagonals               bool
-	width, height, margin, align int
+	outputFileName                string
+	checkDiagonals, maximumMargin bool
+	width, height, margin, align  int
 }
 
 func main() {
@@ -27,6 +27,8 @@ func main() {
 	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
 	flag.BoolVar(&flags.checkDiagonals, "diagonal", false,
 		"when set, diagonally adjacent pixels are considered connected during island detection.")
+	flag.BoolVar(&flags.maximumMargin, "findmaxmargin", false,
+		"when set, will find the largest margin value for which all islands still fit in the output.")
 	flag.IntVar(&flags.width, "w", 512, "width of output image")
 	flag.IntVar(&flags.height, "h", 512, "height of output image")
 	flag.IntVar(&flags.margin, "margin", 1, "margin to use for each box")
@@ -42,16 +44,6 @@ func main() {
 		return
 	}
 
-	var offset int
-	switch flags.align {
-	case 0:
-		offset = 0
-	case 1:
-		offset = flags.margin / 2
-	case 2:
-		offset = flags.margin
-	}
-
 	//
 	// 2. Box Packing
 	//
@@ -62,7 +54,20 @@ func main() {
 		fmt.Println("!! No pixel islands were located in input images. Aborting.")
 		return
 	}
-	unpacked := boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, offset)
+	unpacked := boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+
+	// maximum margin finder
+	// todo: double margin then backoff in a binary-search fashion
+	if flags.maximumMargin && unpacked == 0 {
+		for unpacked == 0 {
+			flags.margin++
+			unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+		}
+		flags.margin--
+		fmt.Println("Margin chosen: ", flags.margin)
+		unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+	}
+
 	if unpacked > 0 {
 		fmt.Println("Note: ", unpacked, "boxes couldn't be packed")
 	}
@@ -101,6 +106,19 @@ func validate(flags myFlags, inputs []string) bool {
 		flag.Usage()
 	}
 	return valid
+}
+
+func getOffset(flags myFlags) int {
+	var offset int
+	switch flags.align {
+	case 0:
+		offset = 0
+	case 1:
+		offset = flags.margin / 2
+	case 2:
+		offset = flags.margin
+	}
+	return offset
 }
 
 func saveImage(fileName string, img image.Image) error {
