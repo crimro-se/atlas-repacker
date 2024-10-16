@@ -79,7 +79,8 @@ func main() {
 	fp, err := os.Create(*outputNamePtr)
 	errHandler(err)
 	defer fp.Close()
-	png.Encode(fp, outImg)
+	err = png.Encode(fp, outImg)
+	errHandler(err)
 
 }
 
