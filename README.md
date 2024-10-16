@@ -13,6 +13,9 @@ I needed this for some specific AI training, it may or may not fit your needs.
 ```
 atlas-repacker [flags] [input.png] [input2.png ...]
 Flags:
+  -align int
+        how to align a box within its margin?
+        0 = top left, 1 = center, 2 = bottom right (default 1)
   -diagonal
         when set, diagonally adjacent pixels are considered connected during island detection.
   -h int
@@ -21,8 +24,6 @@ Flags:
         margin to use for each box (default 1)
   -o string
         filename of output (default "output.png")
-  -offset int
-        ammount to offset each box. Useful values are 0, margin/2, =margin
   -w int
         width of output image (default 512)
 ```
@@ -31,4 +32,5 @@ Flags:
 
 - unit tests
 - add chroma mask support
+- mode to use the largest margin possible
 - .atlas file read/write support (maybe)
