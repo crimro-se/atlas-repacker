@@ -66,6 +66,7 @@ void myFree(void *mem){
 import "C"
 import (
 	"image"
+	"image/draw"
 	"unsafe"
 
 	"golang.org/x/exp/constraints"
@@ -79,7 +80,7 @@ type Box struct {
 }
 
 // identifies pixel islands in images
-func ImagesToBoxes(images []image.Image) []Box {
+func ImagesToBoxes(images []image.Image, diagonal bool) []Box {
 	boxes := make([]Box, 0)
 	var i int
 	for _, img := range images {
@@ -87,7 +88,7 @@ func ImagesToBoxes(images []image.Image) []Box {
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			for y := 0; y < img.Bounds().Dy(); y++ {
 				if !visited.get(x, y) && isVisiblePixel(img, x, y) {
-					rect := findConnectedPixels(img, x, y, true, visited)
+					rect := findConnectedPixels(img, x, y, diagonal, visited)
 					var b Box
 					b.sourceRect = rect
 					b.imgSrc = i
@@ -101,10 +102,10 @@ func ImagesToBoxes(images []image.Image) []Box {
 }
 
 // identifies pixel islands in an image
-func ImageToBoxes(img image.Image) []Box {
+func ImageToBoxes(img image.Image, diagonal bool) []Box {
 	images := make([]image.Image, 0, 1)
 	images = append(images, img)
-	return ImagesToBoxes(images)
+	return ImagesToBoxes(images, diagonal)
 }
 
 // Given an image and a starting pixel, finds all connected pixels and returns a square encompassing them.
@@ -255,6 +256,14 @@ func PackBoxes(boxes []Box, W, H, boxMargin, offset int) int {
 		}
 	}
 	return unpacked
+}
+
+// Creates a new atlas image based on the input images and packed boxes.
+// typically used after ImageToBoxes and PackBoxes
+func RenderNewAtlas(images []image.Image, boxes []Box, outImg draw.Image) {
+	for _, box := range boxes {
+		draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Over)
+	}
 }
 
 /*

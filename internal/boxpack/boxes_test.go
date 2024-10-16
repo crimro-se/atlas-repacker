@@ -35,7 +35,7 @@ func TestPack(t *testing.T) {
 	img := DrawRects(ab[0], 100, 40)
 
 	// test ability to find box in img
-	fmt.Println(ImageToBoxes(img))
+	fmt.Println(ImageToBoxes(img, false))
 
 	file, err := os.Create("test.png")
 	if err != nil {
