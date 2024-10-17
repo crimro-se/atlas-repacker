@@ -131,6 +131,7 @@ func saveImage(fileName string, img image.Image) error {
 	return err
 }
 
+// loads all input files as image.Image types.
 func loadAllImages(files []string) ([]image.Image, error) {
 	images := make([]image.Image, 0, len(files))
 	for _, inputFile := range files {
@@ -138,15 +139,12 @@ func loadAllImages(files []string) ([]image.Image, error) {
 		if err != nil {
 			return images, err
 		}
+		defer fp.Close()
 		img, _, err := image.Decode(fp)
 		if err != nil {
 			return images, err
 		}
 		images = append(images, img)
-		err = fp.Close()
-		if err != nil {
-			return images, err
-		}
 	}
 	return images, nil
 }
