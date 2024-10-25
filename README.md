@@ -11,7 +11,8 @@ I needed this for some specific AI training, it may or may not fit your needs.
 ## Installing
 
 If you have Go installed on your system, simply:
-`go install github.com/crimro-se/atlas-repacker@latest`
+
+```go install github.com/crimro-se/atlas-repacker@latest```
 
 I'll add binaries as the project matures.
 
