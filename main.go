@@ -9,7 +9,7 @@ import (
 	"image/png"
 	"os"
 
-	"github.com/crimro.se/atlas-repacker/internal/boxpack"
+	"github.com/crimro-se/atlas-repacker/internal/boxpack"
 	_ "golang.org/x/image/webp"
 )
 
