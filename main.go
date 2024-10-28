@@ -38,11 +38,28 @@ func main() {
 	if len(boxes) < 1 {
 		errHandler(errors.New("no pixel islands detected in the input image"))
 	}
-	unpacked := boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+	var unpacked int
+
+	//
+	// 2.1 bruteforce w,h if requested
+	//
+	if flags.minimumSquareMode > 0 {
+		wh := (boxpack.EstimateOutputWH(boxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
+		unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
+		for unpacked > 0 {
+			wh += flags.minimumSquareMode
+			unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
+		}
+		flags.width = wh
+		flags.height = wh
+		fmt.Println("Calculated output size (W&H): ", wh)
+	}
+
+	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 
 	// maximum margin finder
 	// todo: double margin then backoff in a binary-search fashion
-	if flags.maximumMargin && unpacked == 0 {
+	if flags.maximumMarginMode && unpacked == 0 {
 		for unpacked == 0 {
 			flags.margin++
 			unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))

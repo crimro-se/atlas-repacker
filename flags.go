@@ -8,18 +8,22 @@ import (
 )
 
 type myFlags struct {
-	outputFileName                string
-	checkDiagonals, maximumMargin bool
-	width, height, margin, align  int
+	outputFileName, inputAtlas                      string
+	checkDiagonals, maximumMarginMode               bool
+	width, height, margin, align, minimumSquareMode int
 }
 
 func getFlags() (myFlags, []string) {
 	var flags myFlags
 	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
+	//todo:
+	//flag.StringVar(&flags.inputAtlas, "atlas", "", "filename of atlas file that defines all the boxes in the input image")
 	flag.BoolVar(&flags.checkDiagonals, "diagonal", false,
 		"when set, diagonally adjacent pixels are considered connected during island detection.")
-	flag.BoolVar(&flags.maximumMargin, "findmaxmargin", false,
+	flag.BoolVar(&flags.maximumMarginMode, "findmaxmargin", false,
 		"when set, will find the largest margin value for which all islands still fit in the output.")
+	flag.IntVar(&flags.minimumSquareMode, "findminsquare", 0,
+		"If set > 0, finds the smallest output image size for which w and h is a multiple of this value.")
 	flag.IntVar(&flags.width, "w", 512, "width of output image")
 	flag.IntVar(&flags.height, "h", 512, "height of output image")
 	flag.IntVar(&flags.margin, "margin", 1, "margin to use for each box")

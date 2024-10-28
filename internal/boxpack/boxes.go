@@ -67,6 +67,7 @@ import "C"
 import (
 	"image"
 	"image/draw"
+	"math"
 	"unsafe"
 
 	"golang.org/x/exp/constraints"
@@ -77,6 +78,23 @@ type Box struct {
 	sourceRect image.Rectangle // pixel locations on original input image
 	destRect   image.Rectangle // destination rect.
 	wasPacked  bool            // true if this box has been successfully packed
+}
+
+// returns the sum of area required for all sourceRect boxes
+func getSourceArea(boxes []Box, margin int) int {
+	area := 0
+	var box Box
+	for _, box = range boxes {
+		box.sourceRect.Max.X += margin
+		box.sourceRect.Max.Y += margin
+		area += box.sourceRect.Dx() * box.sourceRect.Dy()
+	}
+	return area
+}
+
+// Estimates an appropriate w & h for output based on the input squares
+func EstimateOutputWH(boxes []Box, margin int) int {
+	return int(math.Sqrt(float64(getSourceArea(boxes, margin))))
 }
 
 // identifies pixel islands in images
