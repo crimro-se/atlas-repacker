@@ -57,8 +57,9 @@ func main() {
 
 	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 
-	// maximum margin finder
-	// todo: double margin then backoff in a binary-search fashion
+	//
+	// 2.2 maximum margin finder
+	//     todo: double margin then backoff in a binary-search fashion
 	if flags.maximumMarginMode && unpacked == 0 {
 		for unpacked == 0 {
 			flags.margin++
@@ -72,9 +73,12 @@ func main() {
 	if unpacked > 0 {
 		fmt.Println("Note: ", unpacked, "boxes couldn't be packed")
 	}
+
+	//
+	// 2.3 save output
+	//
 	outImg := image.NewNRGBA(image.Rect(0, 0, flags.width, flags.height))
 	boxpack.RenderNewAtlas(images, boxes, outImg)
-
 	errHandler(saveImage(flags.outputFileName, outImg))
 }
 

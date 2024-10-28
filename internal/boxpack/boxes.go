@@ -145,6 +145,8 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 		maxX = max(maxX, point.X)
 		maxY = max(maxY, point.Y)
 
+		// adds pt to the list of pts to check IF it's within bounds
+		// and hasn't been visited yet and is visible.
 		pointCheck := func(pt image.Point) {
 			if !pt.In(bounds) {
 				return
@@ -156,6 +158,7 @@ func findConnectedPixels(img image.Image, x, y int, diagonal bool, visited visit
 				stack = append(stack, pt)
 			}
 		}
+
 		for xOff := -1; xOff <= 1; xOff++ {
 			for yOff := -1; yOff <= 1; yOff++ {
 				if abs(xOff)+abs(yOff) == 2 && !diagonal {
