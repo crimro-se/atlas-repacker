@@ -13,6 +13,10 @@ type myFlags struct {
 	width, height, margin, align, minimumSquareMode int
 }
 
+func initFlags() {
+	flag.Usage = usage
+}
+
 func getFlags() (myFlags, []string) {
 	var flags myFlags
 	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
@@ -29,7 +33,6 @@ func getFlags() (myFlags, []string) {
 	flag.IntVar(&flags.margin, "margin", 1, "margin to use for each box")
 	flag.IntVar(&flags.align, "align", 1, "how to align a box within its margin?\n0 = top left, 1 = center, 2 = bottom right")
 
-	flag.Usage = usage
 	flag.Parse()
 	inputFiles := flag.Args()
 	return flags, inputFiles

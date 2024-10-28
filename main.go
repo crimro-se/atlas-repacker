@@ -16,6 +16,7 @@ import (
 
 func init() {
 	initLogging()
+	initFlags()
 }
 
 func main() {
