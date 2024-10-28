@@ -83,11 +83,8 @@ type Box struct {
 // returns the sum of area required for all sourceRect boxes
 func getSourceArea(boxes []Box, margin int) int {
 	area := 0
-	var box Box
-	for _, box = range boxes {
-		box.sourceRect.Max.X += margin
-		box.sourceRect.Max.Y += margin
-		area += box.sourceRect.Dx() * box.sourceRect.Dy()
+	for _, box := range boxes {
+		area += (box.sourceRect.Dx() + margin) * (box.sourceRect.Dy() + margin)
 	}
 	return area
 }
