@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -27,11 +28,6 @@ func getFlags() (myFlags, []string) {
 	flag.Usage = usage
 	flag.Parse()
 	inputFiles := flag.Args()
-
-	isValid := validate(flags, inputFiles)
-	if !isValid {
-		os.Exit(1)
-	}
 	return flags, inputFiles
 }
 
@@ -42,25 +38,20 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-// attempt to validate flags. Tells the user about any issues
-func validate(flags myFlags, inputs []string) bool {
-	valid := true
+// attempt to validate flags. Any issues returned as errors
+func validateFlags(flags myFlags, inputs []string) []error {
+	var errs []error
+
 	if len(inputs) < 1 {
-		fmt.Println("!! No input files specified!")
-		valid = false
+		errs = append(errs, errors.New("no input files specified"))
 	}
 
 	if flags.align < 0 || flags.align > 2 {
-		fmt.Println("!! invalid alignment. Should be 0, 1 or 2")
-		valid = false
+		errs = append(errs, errors.New("invalid alignment. Should be 0, 1 or 2"))
 	}
 
 	if flags.margin < 0 || flags.width < 1 || flags.height < 1 {
-		fmt.Println("!! An input parameter specified is too small or negative")
-		valid = false
+		errs = append(errs, errors.New("an input parameter specified is too small or negative"))
 	}
-	if !valid {
-		flag.Usage()
-	}
-	return valid
+	return errs
 }

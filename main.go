@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -12,21 +14,29 @@ import (
 	_ "golang.org/x/image/webp"
 )
 
+func init() {
+	initLogging()
+}
+
 func main() {
 	//
 	// 1. Flag parsing
 	//
 	flags, inputFiles := getFlags()
+	errs := validateFlags(flags, inputFiles)
+	if len(errs) > 0 {
+		logErrors(errs)
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	//
 	// 2. Box Packing
 	//
-	images, err := loadAllImages(inputFiles)
-	errHandler(err)
+	images := must1(loadAllImages(inputFiles))
 	boxes := boxpack.ImagesToBoxes(images, flags.checkDiagonals)
 	if len(boxes) < 1 {
-		fmt.Println("!! No pixel islands were located in input images. Aborting.")
-		return
+		errHandler(errors.New("no pixel islands detected in the input image"))
 	}
 	unpacked := boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 
@@ -48,8 +58,7 @@ func main() {
 	outImg := image.NewNRGBA(image.Rect(0, 0, flags.width, flags.height))
 	boxpack.RenderNewAtlas(images, boxes, outImg)
 
-	err = saveImage(flags.outputFileName, outImg)
-	errHandler(err)
+	errHandler(saveImage(flags.outputFileName, outImg))
 }
 
 func getOffset(flags myFlags) int {
@@ -91,12 +100,4 @@ func loadAllImages(files []string) ([]image.Image, error) {
 		images = append(images, img)
 	}
 	return images, nil
-}
-
-// if there's an error, show it to the user and stop execution.
-func errHandler(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
