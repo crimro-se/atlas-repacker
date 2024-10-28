@@ -91,7 +91,12 @@ func getSourceArea(boxes []Box, margin int) int {
 
 // Estimates an appropriate w & h for output based on the input squares
 func EstimateOutputWH(boxes []Box, margin int) int {
-	return int(math.Sqrt(float64(getSourceArea(boxes, margin))))
+	maxWH := 0
+	for _, box := range boxes {
+		maxWH = max(maxWH, box.sourceRect.Dx()+margin, box.sourceRect.Dy()+margin)
+	}
+	areaSqrt := int(math.Sqrt(float64(getSourceArea(boxes, margin))))
+	return max(maxWH, areaSqrt)
 }
 
 // identifies pixel islands in images
