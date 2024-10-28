@@ -12,7 +12,7 @@ I needed this for some specific AI training, it might not fit your needs.
 
 ## Building/Installing
 
-(Go)[https://go.dev] and (cgo)[https://github.com/go101/go101/wiki/CGO-Environment-Setup] are required, then simply:
+[Go](https://go.dev) and [cgo](https://github.com/go101/go101/wiki/CGO-Environment-Setup) are required, then simply:
 
 ```bash
 go install github.com/crimro-se/atlas-repacker@latest
