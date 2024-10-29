@@ -8,9 +8,9 @@ import (
 )
 
 type myFlags struct {
-	outputFileName, inputAtlas                      string
-	checkDiagonals, maximumMarginMode               bool
-	width, height, margin, align, minimumSquareMode int
+	outputFileName                                      string
+	checkDiagonals, maximumMarginMode, loadAtlas, debug bool
+	width, height, margin, align, minimumSquareMode     int
 }
 
 func initFlags() {
@@ -20,8 +20,8 @@ func initFlags() {
 func getFlags() (myFlags, []string) {
 	var flags myFlags
 	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
-	//todo:
-	//flag.StringVar(&flags.inputAtlas, "atlas", "", "filename of atlas file that defines all the boxes in the input image")
+	flag.BoolVar(&flags.loadAtlas, "atlas", false, "when set, loads pixel region information from .atlas file with same name")
+	flag.BoolVar(&flags.debug, "debug", false, "when set, writes a debug.png image demonstrating all detected/loaded islands")
 	flag.BoolVar(&flags.checkDiagonals, "diagonal", false,
 		"when set, diagonally adjacent pixels are considered connected during island detection.")
 	flag.BoolVar(&flags.maximumMarginMode, "findmaxmargin", false,

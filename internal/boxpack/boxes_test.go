@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"image"
-	"image/color"
-	"image/draw"
 	"image/png"
 	"testing"
 )
@@ -93,13 +91,4 @@ func TestPacking(t *testing.T) {
 	if c != len(boxes) {
 		t.Fail()
 	}
-}
-
-func drawRects(boxes []BoxTranslation, W, H int) image.Image {
-	img := image.NewRGBA64(image.Rect(0, 0, W, H))
-	src := image.NewUniform(color.RGBA{0, 100, 255, 255})
-	for _, b := range boxes {
-		draw.Draw(img, b.destRect, src, image.ZP, draw.Src)
-	}
-	return img
 }

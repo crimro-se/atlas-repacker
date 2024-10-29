@@ -34,16 +34,33 @@ func main() {
 	//
 	// 2. Box Packing
 	//
-	images := must1(loadAllImages(inputFiles))
-	boxes := boxpack.ImagesToBoxes(images, flags.checkDiagonals)
-	if len(boxes) < 1 {
-		errHandler(errors.New("no pixel islands detected in the input image"))
+	images, err := loadAllImages(inputFiles)
+	errHandler(err, "An error occured whilst loading images.")
+
+	// find pixel islands via atlas file or look at the pixels.
+	var boxes []boxpack.BoxTranslation
+	if flags.loadAtlas {
+		boxes, err = loadAllAtlas(filesToDotAtlas(inputFiles))
+		errHandler(err, "An error occured whilst loading atlas files.")
+	} else {
+		boxes = boxpack.ImagesToBoxes(images, flags.checkDiagonals)
 	}
-	var unpacked int
+	if len(boxes) < 1 {
+		errHandler(errors.New("no pixel islands detected in the input image(s)"))
+	}
+	if flags.debug {
+		img := boxpack.DebugViewRects(boxes, images[0].Bounds().Dx(), images[0].Bounds().Dy(), true, 0)
+		errHandler(saveImage("debug.png", img))
+		fmt.Println("debug.png has been written")
+		if len(inputFiles) > 1 {
+			fmt.Println("NOTE: only the first image you loaded has been debugged.")
+		}
+	}
 
 	//
 	// 2.1 bruteforce w,h if requested
 	//
+	var unpacked int
 	if flags.minimumSquareMode > 0 {
 		wh := (boxpack.EstimateOutputWH(boxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
 		unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))

@@ -66,6 +66,7 @@ void myFree(void *mem){
 import "C"
 import (
 	"image"
+	"image/color"
 	"image/draw"
 	"math"
 	"unsafe"
@@ -91,6 +92,10 @@ func getSourceArea(boxes []BoxTranslation, margin int) int {
 	return area
 }
 
+func BoxFromRect(imgref int, r image.Rectangle) BoxTranslation {
+	return BoxTranslation{imgSrc: imgref, sourceRect: r, wasPacked: false}
+}
+
 // Estimates an appropriate w & h for output based on the input squares
 func EstimateOutputWH(boxes []BoxTranslation, margin int) int {
 	maxWH := 0
@@ -104,8 +109,7 @@ func EstimateOutputWH(boxes []BoxTranslation, margin int) int {
 // identifies pixel islands in images
 func ImagesToBoxes(images []image.Image, diagonal bool) []BoxTranslation {
 	boxes := make([]BoxTranslation, 0)
-	var i int
-	for _, img := range images {
+	for i, img := range images {
 		visited := newVisitedArray(img.Bounds())
 		for x := 0; x < img.Bounds().Dx(); x++ {
 			for y := 0; y < img.Bounds().Dy(); y++ {
@@ -118,7 +122,6 @@ func ImagesToBoxes(images []image.Image, diagonal bool) []BoxTranslation {
 				}
 			}
 		}
-		i++
 	}
 	return boxes
 }
@@ -303,4 +306,49 @@ func boxesToSTBR(boxes []BoxTranslation, stbr *C.stbrp_rect, margin int) {
 		box.h = C.int(boxes[i].sourceRect.Dy() + margin)
 		C.assignValue(stbr, C.int(i), &box)
 	}
+}
+
+// draws all of either the source or destination set of rects in a []BoxTranslation onto a new RGBA image.
+func DebugViewRects(boxes []BoxTranslation, W, H int, drawSrcRects bool, imgSrc int) image.Image {
+	img := image.NewRGBA64(image.Rect(0, 0, W, H))
+	rectCol := image.NewUniform(color.RGBA{255, 255, 255, 255})
+
+	for _, b := range boxes {
+		if b.imgSrc != imgSrc {
+			continue
+		}
+		if drawSrcRects {
+			draw.Draw(img, b.sourceRect, rectCol, image.ZP, draw.Src)
+		} else {
+			draw.Draw(img, b.destRect, rectCol, image.ZP, draw.Src)
+		}
+	}
+
+	//TODO: make this useful.
+	/*
+		textCol := image.NewUniform(color.RGBA{255, 0, 0, 255})
+		d := &font.Drawer{
+			Dst:  img,
+			Src:  textCol,
+			Face: basicfont.Face7x13,
+		}
+		// second pass for text
+		i := 0 //nb: not using for loop's counter as we may skip drawing some boxes.
+		for _, b := range boxes {
+			if b.imgSrc != imgSrc {
+				continue
+			}
+			if drawSrcRects {
+				d.Dot.X = fixed.I(b.sourceRect.Min.X)
+				d.Dot.Y = fixed.I(b.sourceRect.Min.Y + 9)
+				d.DrawString(strconv.Itoa(i))
+			} else {
+				d.Dot.X = fixed.I(b.destRect.Min.X)
+				d.Dot.Y = fixed.I(b.destRect.Min.Y + 9)
+				d.DrawString(strconv.Itoa(i))
+			}
+			i++
+		}
+	*/
+	return img
 }
