@@ -45,24 +45,24 @@ func TestIslands(t *testing.T) {
 }
 
 func TestPacking(t *testing.T) {
-	var boxes []Box
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 20, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 20)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 30, 30)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 20, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 10)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 10, 20)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 30, 30)})
-	boxes = append(boxes, Box{sourceRect: image.Rect(0, 0, 50, 50)})
+	var boxes []BoxTranslation
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 20, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 20)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 30, 30)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 20, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 10)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 10, 20)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 30, 30)})
+	boxes = append(boxes, BoxTranslation{sourceRect: image.Rect(0, 0, 50, 50)})
 	unpacked := PackBoxes(boxes, 900, 40, 1, 0)
 	if unpacked != 1 {
 		t.Fail()
@@ -95,7 +95,7 @@ func TestPacking(t *testing.T) {
 	}
 }
 
-func drawRects(boxes []Box, W, H int) image.Image {
+func drawRects(boxes []BoxTranslation, W, H int) image.Image {
 	img := image.NewRGBA64(image.Rect(0, 0, W, H))
 	src := image.NewUniform(color.RGBA{0, 100, 255, 255})
 	for _, b := range boxes {

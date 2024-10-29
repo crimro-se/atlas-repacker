@@ -73,7 +73,9 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-type Box struct {
+// A box translation tracks its source image number and rect,
+// its new location and if it was successfully repacked.
+type BoxTranslation struct {
 	imgSrc     int             // which input image is this box from?
 	sourceRect image.Rectangle // pixel locations on original input image
 	destRect   image.Rectangle // destination rect.
@@ -81,7 +83,7 @@ type Box struct {
 }
 
 // returns the sum of area required for all sourceRect boxes
-func getSourceArea(boxes []Box, margin int) int {
+func getSourceArea(boxes []BoxTranslation, margin int) int {
 	area := 0
 	for _, box := range boxes {
 		area += (box.sourceRect.Dx() + margin) * (box.sourceRect.Dy() + margin)
@@ -90,7 +92,7 @@ func getSourceArea(boxes []Box, margin int) int {
 }
 
 // Estimates an appropriate w & h for output based on the input squares
-func EstimateOutputWH(boxes []Box, margin int) int {
+func EstimateOutputWH(boxes []BoxTranslation, margin int) int {
 	maxWH := 0
 	for _, box := range boxes {
 		maxWH = max(maxWH, box.sourceRect.Dx()+margin, box.sourceRect.Dy()+margin)
@@ -100,8 +102,8 @@ func EstimateOutputWH(boxes []Box, margin int) int {
 }
 
 // identifies pixel islands in images
-func ImagesToBoxes(images []image.Image, diagonal bool) []Box {
-	boxes := make([]Box, 0)
+func ImagesToBoxes(images []image.Image, diagonal bool) []BoxTranslation {
+	boxes := make([]BoxTranslation, 0)
 	var i int
 	for _, img := range images {
 		visited := newVisitedArray(img.Bounds())
@@ -109,7 +111,7 @@ func ImagesToBoxes(images []image.Image, diagonal bool) []Box {
 			for y := 0; y < img.Bounds().Dy(); y++ {
 				if !visited.get(x, y) && isVisiblePixel(img, x, y) {
 					rect := findConnectedPixels(img, x, y, diagonal, visited)
-					var b Box
+					var b BoxTranslation
 					b.sourceRect = rect
 					b.imgSrc = i
 					boxes = append(boxes, b)
@@ -122,7 +124,7 @@ func ImagesToBoxes(images []image.Image, diagonal bool) []Box {
 }
 
 // identifies pixel islands in an image
-func ImageToBoxes(img image.Image, diagonal bool) []Box {
+func ImageToBoxes(img image.Image, diagonal bool) []BoxTranslation {
 	images := make([]image.Image, 0, 1)
 	images = append(images, img)
 	return ImagesToBoxes(images, diagonal)
@@ -216,9 +218,9 @@ func abs[T constraints.Integer](x T) T {
 // boxMargin - additinal padding to provide each box in total, pixels.
 // offset - ammount to offset each box. useful values are half of margin, =margin, or zero.
 // returns result and count of any remaining unpacked (size+margin > W or H)
-func PackAllBoxes(boxesImmutable []Box, W, H, boxMargin, offset int) ([][]Box, int) {
-	allBoxes := make([][]Box, 0)
-	boxes := make([]Box, len(boxesImmutable)) // working copy
+func PackAllBoxes(boxesImmutable []BoxTranslation, W, H, boxMargin, offset int) ([][]BoxTranslation, int) {
+	allBoxes := make([][]BoxTranslation, 0)
+	boxes := make([]BoxTranslation, len(boxesImmutable)) // working copy
 	copy(boxes, boxesImmutable)
 	i := 0
 	unpacked := len(boxes)
@@ -229,8 +231,8 @@ func PackAllBoxes(boxesImmutable []Box, W, H, boxMargin, offset int) ([][]Box, i
 			// no progress since previous iteration
 			break
 		}
-		remainer := make([]Box, 0, unpacked)
-		allBoxes = append(allBoxes, make([]Box, 0, previous-unpacked))
+		remainer := make([]BoxTranslation, 0, unpacked)
+		allBoxes = append(allBoxes, make([]BoxTranslation, 0, previous-unpacked))
 		for _, box := range boxes {
 			if box.wasPacked {
 				allBoxes[i] = append(allBoxes[i], box)
@@ -250,7 +252,7 @@ func PackAllBoxes(boxesImmutable []Box, W, H, boxMargin, offset int) ([][]Box, i
 // returns the number of unpacked rects remaining
 // nb: although this looks like boxes is passed by-value, a slice type is just accounting ints and a ptr to its own data.
 // extra dereferencing wouldn't benefit us as we don't append or remove from the slice.
-func PackBoxes(boxes []Box, W, H, boxMargin, offset int) int {
+func PackBoxes(boxes []BoxTranslation, W, H, boxMargin, offset int) int {
 	stbr := C.allocateRects(C.int(len(boxes)))
 	defer C.myFree(unsafe.Pointer(stbr))
 	boxesToSTBR(boxes, stbr, boxMargin)
@@ -283,7 +285,7 @@ func PackBoxes(boxes []Box, W, H, boxMargin, offset int) int {
 
 // Creates a new atlas image based on the input images and packed boxes.
 // typically used after ImageToBoxes and PackBoxes
-func RenderNewAtlas(images []image.Image, boxes []Box, outImg draw.Image) {
+func RenderNewAtlas(images []image.Image, boxes []BoxTranslation, outImg draw.Image) {
 	for _, box := range boxes {
 		draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Over)
 	}
@@ -293,7 +295,7 @@ func RenderNewAtlas(images []image.Image, boxes []Box, outImg draw.Image) {
 Converts a slice of Box into a C array of stbrp_rect via the dimensions of box.sourceRect
 stbr pointer is presumed to point to an array of sufficient size.
 */
-func boxesToSTBR(boxes []Box, stbr *C.stbrp_rect, margin int) {
+func boxesToSTBR(boxes []BoxTranslation, stbr *C.stbrp_rect, margin int) {
 	var box C.stbrp_rect
 	for i := 0; i < len(boxes); i++ {
 		box.id = C.int(i)
