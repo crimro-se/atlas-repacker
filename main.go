@@ -12,6 +12,7 @@ import (
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
 	"github.com/crimro-se/atlas-repacker/internal/boxpack"
+	"github.com/crimro-se/atlas-repacker/internal/findislands"
 	_ "golang.org/x/image/webp"
 )
 
@@ -44,7 +45,7 @@ func main() {
 		boxes, err = loadAllAtlas(atlas.FilepathsToDotAtlas(inputFiles))
 		errHandler(err, "An error occured whilst loading atlas files.")
 	} else {
-		boxes = boxpack.ImagesToBoxes(images, flags.checkDiagonals)
+		boxes = rectsToBoxTranslation(findislands.ImagesToIslands(images, flags.checkDiagonals))
 	}
 	if len(boxes) < 1 {
 		errHandler(errors.New("no pixel islands detected in the input image(s)"))
