@@ -10,6 +10,13 @@ actual packing is deferred to https://github.com/nothings/stb/blob/master/stb_re
 
 I needed this for some specific AI training, it might not fit your needs.
 
+## Features
+
+- supports loading png, webp, gif
+- can detect pixel islands itself, or via [atlas files](https://en.esotericsoftware.com/spine-atlas-format) (currently only xy, size & rotate properties are used. I'll increase support as I encounter such data in the wild.)
+- can expand margins to fairly consume all available space in output
+- can find the minimum size for output
+
 ## Building/Installing
 
 [Go](https://go.dev) and [cgo](https://github.com/go101/go101/wiki/CGO-Environment-Setup) are required, then simply:
@@ -28,6 +35,10 @@ Flags:
   -align int
         how to align a box within its margin?
         0 = top left, 1 = center, 2 = bottom right (default 1)
+  -atlas
+        when set, loads pixel region information from .atlas files with same name
+  -debug
+        when set, writes a debug.png image demonstrating all detected/loaded islands
   -diagonal
         when set, diagonally adjacent pixels are considered connected during island detection.
   -findmaxmargin
@@ -47,4 +58,4 @@ Flags:
 ## TODO
 
 - add chroma mask support
-- .atlas file read/write support (maybe)
+- enhance .atlas file support

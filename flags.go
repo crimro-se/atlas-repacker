@@ -20,7 +20,7 @@ func initFlags() {
 func getFlags() (myFlags, []string) {
 	var flags myFlags
 	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
-	flag.BoolVar(&flags.loadAtlas, "atlas", false, "when set, loads pixel region information from .atlas file with same name")
+	flag.BoolVar(&flags.loadAtlas, "atlas", false, "when set, loads pixel region information from .atlas files with same name")
 	flag.BoolVar(&flags.debug, "debug", false, "when set, writes a debug.png image demonstrating all detected/loaded islands")
 	flag.BoolVar(&flags.checkDiagonals, "diagonal", false,
 		"when set, diagonally adjacent pixels are considered connected during island detection.")
