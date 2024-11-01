@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -26,25 +25,58 @@ func FilepathsToDotAtlas(filenames []string) []string {
 	return modifiedFilenames
 }
 
-// parseAtlasFile reads an atlas file and returns a map of region names to image.Rectangles
+// parse atlas file data
 func ParseAtlasFile(data io.Reader) (AtlasRegions, error) {
+	filedata, err := parseFileToMap(data)
+	if err != nil {
+		return nil, err
+	}
 
 	regions := make(AtlasRegions)
-	currentRegion := ""
-	currentRect := image.Rectangle{}
-	rotate := false
+	for currentRegion, attrs := range filedata {
+		rotate := attrs["rotate"] == "true" || attrs["rotate"] == "90"
+		if bounds, ok := attrs["bounds"]; ok {
+			x, y, w, h, err := parse4Ints(bounds)
+			if err != nil {
+				return nil, err
+			}
+			regions[currentRegion] = buildRect(x, y, w, h, rotate)
+		} else if xy, ok := attrs["xy"]; ok {
+			size, ok := attrs["size"]
+			if !ok {
+				return nil, fmt.Errorf("error in atlas file, xy attribute presented but size is missing")
+			}
+			x, y, err := parse2Ints(xy)
+			if err != nil {
+				return nil, err
+			}
+			w, h, err := parse2Ints(size)
+			if err != nil {
+				return nil, err
+			}
+			regions[currentRegion] = buildRect(x, y, w, h, rotate)
+		} else {
+			return nil, fmt.Errorf("error in atlas file, boundary completely unknown for '%s'", currentRegion)
+		}
+	}
+	return regions, nil
+}
 
+func parseFileToMap(data io.Reader) (map[string]map[string]string, error) {
+	mappedData := make(map[string]map[string]string, 0)
 	scanner := bufio.NewScanner(data)
+	currentRegion := ""
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		// Skip empty lines and the first line (assuming it's the image file name)
-		if len(line) == 0 || strings.HasSuffix(line, ".png") || strings.HasSuffix(line, ".webp") {
+
+		if len(line) == 0 || strings.HasSuffix(line, ".png") || strings.HasSuffix(line, ".webp") || strings.HasSuffix(line, ".gif") {
 			continue
 		}
-
-		// Check if the line starts a new region
 		if !strings.Contains(line, ":") {
 			currentRegion = line
+			if _, exists := mappedData[currentRegion]; !exists {
+				mappedData[currentRegion] = make(map[string]string)
+			}
 			continue
 		}
 
@@ -53,67 +85,55 @@ func ParseAtlasFile(data io.Reader) (AtlasRegions, error) {
 			continue
 		}
 
-		// Parse attributes for the current region
 		parts := strings.SplitN(line, ":", 2)
-		if len(parts) != 2 {
-			log.Printf("Warning: Skipping malformed line - '%s'\n", line)
-			continue
+		if len(parts) < 2 {
+			return nil, errors.New("problem parsing atlas file")
 		}
-
 		key, value := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-		switch key {
-		case "rotate":
-			rotate = (value == "true")
-
-		case "xy":
-			coords := strings.Split(value, ",")
-			if len(coords) != 2 {
-				return nil, errors.New("invalid xy coordinates")
-			}
-			x, err := strconv.Atoi(strings.TrimSpace(coords[0]))
-			if err != nil {
-				return nil, err
-			}
-			y, err := strconv.Atoi(strings.TrimSpace(coords[1]))
-			if err != nil {
-				return nil, err
-			}
-			// Store the xy for later use with size
-			currentRect.Min = image.Pt(x, y)
-			regions[currentRegion] = currentRect
-		case "size":
-			dims := strings.Split(value, ",")
-			if len(dims) != 2 {
-				return nil, errors.New("invalid size dimensions")
-			}
-			w, err := strconv.Atoi(strings.TrimSpace(dims[0]))
-			if err != nil {
-				return nil, err
-			}
-			h, err := strconv.Atoi(strings.TrimSpace(dims[1]))
-			if err != nil {
-				return nil, err
-			}
-			// NB: we add Min to this later.
-			// this enables xy clause to be before or after size.
-			// depends on rotate coming first still, but it seems exporters always do this anyway.
-			if rotate {
-				currentRect.Max = image.Pt(h, w)
-			} else {
-				currentRect.Max = image.Pt(w, h)
-			}
-			regions[currentRegion] = currentRect
-		}
+		mappedData[currentRegion][key] = value
 	}
-
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
+	return mappedData, nil
+}
 
-	for name, rect := range regions {
-		rect.Max = rect.Max.Add(rect.Min)
-		regions[name] = rect
+// builds a rect according to the nuances of atlas files (rotate = w,h swap)
+func buildRect(x, y, w, h int, rotate bool) image.Rectangle {
+	if rotate {
+		w, h = h, w
 	}
+	return image.Rect(x, y, x+w, y+h)
+}
 
-	return regions, nil
+func parse2Ints(str string) (int, int, error) {
+	coords := strings.Split(str, ",")
+	if len(coords) != 2 {
+		return 0, 0, errors.New("expected 2 ints whilst parsing atlas file")
+	}
+	x, err := strconv.Atoi(strings.TrimSpace(coords[0]))
+	if err != nil {
+		return 0, 0, err
+	}
+	y, err := strconv.Atoi(strings.TrimSpace(coords[1]))
+	if err != nil {
+		return 0, 0, err
+	}
+	return x, y, nil
+}
+
+func parse4Ints(str string) (int, int, int, int, error) {
+	coords := strings.Split(str, ",")
+	if len(coords) != 4 {
+		return 0, 0, 0, 0, errors.New("expected 4 ints whilst parsing atlas file")
+	}
+	var fourInts [4]int
+	var err error
+	for i, v := range coords {
+		fourInts[i], err = strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0, 0, 0, 0, err
+		}
+	}
+	return fourInts[0], fourInts[1], fourInts[2], fourInts[3], nil
 }
