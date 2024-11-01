@@ -13,7 +13,7 @@ I needed this for some specific AI training, it might not fit your needs.
 ## Features
 
 - supports loading png, webp, gif
-- can detect pixel islands itself, or via [atlas files](https://en.esotericsoftware.com/spine-atlas-format) (currently only xy, size & rotate properties are used. I'll increase support as I encounter such data in the wild.)
+- can detect pixel islands itself, or via [atlas files](https://en.esotericsoftware.com/spine-atlas-format) (currently xy, size, bounds & rotate properties are used, however only rotate values of true, false or 90 are implemented.)
 - can expand margins to fairly consume all available space in output
 - can find the minimum size for output
 
