@@ -55,6 +55,15 @@ Flags:
         width of output image (default 512)
 ```
 
+## Batch Processing Example
+
+My preference is to use the [parallel](https://www.gnu.org/software/parallel/) command, as the {} substitution values are extremely convenient, as is the joblog.
+```bash
+find test_data/1/ -iname '*.png' -print0 | parallel -0 --joblog log.txt  ./atlas-repacker -w 1024 -h 1024 -atlas -findmaxmargin -o "test_data/1_out/{/.}_repacked.png" "{}"
+
+perl -ane '$F[6] and print' < log.txt > err.log
+```
+
 ## TODO
 
 - add chroma mask support
