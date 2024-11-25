@@ -9,6 +9,7 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	"os"
+	"strconv"
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
 	"github.com/crimro-se/atlas-repacker/internal/boxpack"
@@ -22,6 +23,7 @@ func init() {
 }
 
 func main() {
+	errored := 0
 	//
 	// 1. Flag parsing
 	//
@@ -53,9 +55,9 @@ func main() {
 	if flags.debug {
 		img := boxpack.DebugViewRects(boxes, images[0].Bounds().Dx(), images[0].Bounds().Dy(), true, 0)
 		errHandler(saveImage("debug.png", img))
-		fmt.Println("debug.png has been written")
+		msg("debug.png has been written")
 		if len(inputFiles) > 1 {
-			fmt.Println("NOTE: only the first image you loaded has been debugged.")
+			msg("NOTE: only the first image you loaded has been debugged.")
 		}
 	}
 
@@ -63,6 +65,7 @@ func main() {
 	// 2.1 bruteforce w,h if requested
 	//
 	var unpacked int
+	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 	if flags.minimumSquareMode > 0 {
 		wh := (boxpack.EstimateOutputWH(boxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
 		unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
@@ -72,26 +75,35 @@ func main() {
 		}
 		flags.width = wh
 		flags.height = wh
-		fmt.Println("Calculated output size (W&H): ", wh)
+		msg("Calculated output size (W&H): " + strconv.Itoa(wh))
 	}
-
-	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 
 	//
 	// 2.2 maximum margin finder
 	//     todo: double margin then backoff in a binary-search fashion
 	if flags.maximumMarginMode && unpacked == 0 {
+		// we need a clone of the boxes for our tests
+		boxes2 := make([]boxpack.BoxTranslation, len(boxes))
+		copy(boxes2, boxes)
 		for unpacked == 0 {
 			flags.margin++
-			unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+			unpacked = boxpack.PackBoxes(boxes2, flags.width, flags.height, flags.margin, getOffset(flags))
+			if unpacked == 0 {
+				boxes = boxes2
+			}
 		}
+		unpacked = 0
 		flags.margin--
-		fmt.Println("Margin chosen: ", flags.margin)
-		unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+		msg("Margin chosen: " + strconv.Itoa(flags.margin))
+	}
+
+	if flags.maximumMarginMode && unpacked > 0 {
+		fmt.Println("Note: margin detection skipped as we already can't pack everything")
 	}
 
 	if unpacked > 0 {
-		fmt.Println("Note: ", unpacked, "boxes couldn't be packed")
+		msg("Note: " + strconv.Itoa(unpacked) + " boxes couldn't be packed")
+		errored = 1
 	}
 
 	//
@@ -100,6 +112,9 @@ func main() {
 	outImg := image.NewNRGBA(image.Rect(0, 0, flags.width, flags.height))
 	boxpack.RenderNewAtlas(images, boxes, outImg)
 	errHandler(saveImage(flags.outputFileName, outImg))
+
+	// exit status
+	os.Exit(errored)
 }
 
 func getOffset(flags myFlags) int {

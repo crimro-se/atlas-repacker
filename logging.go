@@ -48,3 +48,7 @@ func must2[T1, T2 any](x T1, y T2, err error, msg ...string) (T1, T2) {
 	errHandler(err, msg...)
 	return x, y
 }
+
+func msg(message string) {
+	log.Info().Msg(message)
+}
