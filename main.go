@@ -9,7 +9,6 @@ import (
 	_ "image/jpeg"
 	"image/png"
 	"os"
-	"strconv"
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
 	"github.com/crimro-se/atlas-repacker/internal/boxpack"
@@ -61,11 +60,12 @@ func main() {
 		}
 	}
 
+	var unpacked int
+	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
+
 	//
 	// 2.1 bruteforce w,h if requested
 	//
-	var unpacked int
-	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
 	if flags.minimumSquareMode > 0 {
 		wh := (boxpack.EstimateOutputWH(boxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
 		unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
@@ -75,7 +75,7 @@ func main() {
 		}
 		flags.width = wh
 		flags.height = wh
-		msg("Calculated output size (W&H): " + strconv.Itoa(wh))
+		msg(fmt.Sprintf("Calculated output size (W&H): %d", wh))
 	}
 
 	//
@@ -94,15 +94,15 @@ func main() {
 		}
 		unpacked = 0
 		flags.margin--
-		msg("Margin chosen: " + strconv.Itoa(flags.margin))
+		msg(fmt.Sprintf("Margin chosen: %d", flags.margin))
 	}
 
 	if flags.maximumMarginMode && unpacked > 0 {
-		fmt.Println("Note: margin detection skipped as we already can't pack everything")
+		msg("Note: margin detection skipped as we already can't pack everything")
 	}
 
 	if unpacked > 0 {
-		msg("Note: " + strconv.Itoa(unpacked) + " boxes couldn't be packed")
+		msg(fmt.Sprintf("Note: %d boxes couldn't be packed", unpacked))
 		errored = 1
 	}
 
