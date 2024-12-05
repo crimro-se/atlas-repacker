@@ -11,7 +11,13 @@ import (
 	"strings"
 )
 
-type AtlasRegions map[string]image.Rectangle
+type AtlasRegions map[string]RotatableRect
+
+// a rect that may require rotation
+type RotatableRect struct {
+	image.Rectangle
+	RotateRequired bool // True if this region should be rotated 90 degrees clockwise
+}
 
 // Edits filenames, replacing extensions with .atlas
 func FilepathsToDotAtlas(filenames []string) []string {
@@ -27,7 +33,7 @@ func FilepathsToDotAtlas(filenames []string) []string {
 
 // parse atlas file data
 func ParseAtlasFile(data io.Reader) (AtlasRegions, error) {
-	filedata, err := parseFileToMap(data)
+	filedata, err := parseAtlasFileToMap(data)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +68,8 @@ func ParseAtlasFile(data io.Reader) (AtlasRegions, error) {
 	return regions, nil
 }
 
-func parseFileToMap(data io.Reader) (map[string]map[string]string, error) {
+// digests the file into a map of string (region name) to (map of (parameter name) to parameter value.)
+func parseAtlasFileToMap(data io.Reader) (map[string]map[string]string, error) {
 	mappedData := make(map[string]map[string]string, 0)
 	scanner := bufio.NewScanner(data)
 	currentRegion := ""
@@ -98,12 +105,12 @@ func parseFileToMap(data io.Reader) (map[string]map[string]string, error) {
 	return mappedData, nil
 }
 
-// builds a rect according to the nuances of atlas files (rotate = w,h swap)
-func buildRect(x, y, w, h int, rotate bool) image.Rectangle {
-	if rotate {
-		w, h = h, w
-	}
-	return image.Rect(x, y, x+w, y+h)
+// builds a rect that might require a deferred rotation
+func buildRect(x, y, w, h int, rotate bool) RotatableRect {
+	var r RotatableRect
+	r.RotateRequired = rotate
+	r.Rectangle = image.Rect(x, y, x+w, y+h)
+	return r
 }
 
 func parse2Ints(str string) (int, int, error) {

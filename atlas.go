@@ -29,7 +29,7 @@ func loadAllAtlas(files []string) ([]boxpack.BoxTranslation, error) {
 func atlasToBoxes(refImage int, ar atlas.AtlasRegions) []boxpack.BoxTranslation {
 	boxes := make([]boxpack.BoxTranslation, 0, len(ar))
 	for _, v := range ar {
-		boxes = append(boxes, boxpack.BoxFromRect(refImage, v))
+		boxes = append(boxes, boxpack.BoxFromRect(refImage, v.Rectangle, v.RotateRequired))
 	}
 	return boxes
 }

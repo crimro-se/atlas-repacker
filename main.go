@@ -42,6 +42,7 @@ func main() {
 
 	// find pixel islands via atlas file or look at the pixels.
 	var boxes []boxpack.BoxTranslation
+	// TODO: more complex loading logic that can handle a mix of files that include atlas files and others that don't
 	if flags.loadAtlas {
 		boxes, err = loadAllAtlas(atlas.FilepathsToDotAtlas(inputFiles))
 		errHandler(err, "An error occured whilst loading atlas files.")
@@ -117,6 +118,7 @@ func main() {
 	os.Exit(errored)
 }
 
+// resolves the exact pixel offset to apply based on cli flags
 func getOffset(flags myFlags) int {
 	var offset int
 	switch flags.align {

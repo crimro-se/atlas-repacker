@@ -10,7 +10,7 @@ func rectsToBoxTranslation(rr [][]image.Rectangle) []boxpack.BoxTranslation {
 	boxes := make([]boxpack.BoxTranslation, 0, len(rr[0]))
 	for i, rects := range rr {
 		for _, rect := range rects {
-			boxes = append(boxes, boxpack.BoxFromRect(i, rect))
+			boxes = append(boxes, boxpack.BoxFromRect(i, rect, false))
 		}
 	}
 	return boxes

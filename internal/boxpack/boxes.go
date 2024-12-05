@@ -70,15 +70,18 @@ import (
 	"image/draw"
 	"math"
 	"unsafe"
+
+	"github.com/disintegration/imaging"
 )
 
 // A box translation tracks its source image number and rect,
 // its new location and if it was successfully repacked.
 type BoxTranslation struct {
-	imgSrc     int             // which input image is this box from?
-	sourceRect image.Rectangle // pixel locations on original input image
-	destRect   image.Rectangle // destination rect.
-	wasPacked  bool            // true if this box has been successfully packed
+	imgSrc         int             // which input image is this box from?
+	sourceRect     image.Rectangle // pixel locations on original input image
+	destRect       image.Rectangle // destination rect.
+	wasPacked      bool            // true if this box has been successfully packed
+	deferredRotate bool            // rotate 90 clockwise when rendering if true
 }
 
 // returns the sum of area required for all sourceRect boxes
@@ -90,8 +93,8 @@ func getSourceArea(boxes []BoxTranslation, margin int) int {
 	return area
 }
 
-func BoxFromRect(imgref int, r image.Rectangle) BoxTranslation {
-	return BoxTranslation{imgSrc: imgref, sourceRect: r, wasPacked: false}
+func BoxFromRect(imgref int, r image.Rectangle, rotate bool) BoxTranslation {
+	return BoxTranslation{imgSrc: imgref, sourceRect: r, wasPacked: false, deferredRotate: rotate}
 }
 
 // Estimates an appropriate w & h for output based on the input squares
@@ -176,9 +179,38 @@ func PackBoxes(boxes []BoxTranslation, W, H, boxMargin, offset int) int {
 // Creates a new atlas image based on the input images and packed boxes.
 // typically used after ImageToBoxes and PackBoxes
 func RenderNewAtlas(images []image.Image, boxes []BoxTranslation, outImg draw.Image) {
+	dx, dy := getMaxSourceRectSizes(boxes)
+	nrgba := image.NewNRGBA(image.Rect(0, 0, dx, dy))
 	for _, box := range boxes {
-		draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Over)
+		if box.deferredRotate {
+			// this has the bizzare implication that the source W & H need to be swapped first.
+			// we left them "wrong" prior to packing in order to produce a correct destination rect
+			box.sourceRect.Max = image.Point{
+				X: box.sourceRect.Min.X + box.sourceRect.Dy(),
+				Y: box.sourceRect.Min.Y + box.sourceRect.Dx(),
+			}
+
+			// rotation
+			bufferRect := image.Rect(0, 0, box.sourceRect.Dx(), box.sourceRect.Dy())
+			draw.Draw(nrgba, bufferRect, images[box.imgSrc], box.sourceRect.Min, draw.Src)
+			croppedBuffer := nrgba.SubImage(bufferRect)
+			rotatedImage := imaging.Rotate270(croppedBuffer)
+
+			draw.Draw(outImg, box.destRect, rotatedImage, image.Point{0, 0}, draw.Over)
+		} else {
+			draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Over)
+		}
 	}
+}
+
+// returns the maximum width and heights represented in the set of source rects.
+func getMaxSourceRectSizes(boxes []BoxTranslation) (int, int) {
+	dx, dy := 0, 0
+	for _, b := range boxes {
+		dx = max(b.sourceRect.Dx(), dx)
+		dy = max(b.sourceRect.Dy(), dy)
+	}
+	return dx, dy
 }
 
 /*
