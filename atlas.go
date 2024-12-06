@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
@@ -23,6 +24,20 @@ func loadAllAtlas(files []string) ([]boxpack.BoxTranslation, error) {
 		boxes = append(boxes, atlasToBoxes(i, atlas)...)
 	}
 	return boxes, nil
+}
+
+func parseAtlasFile(filename string, imgRef int) ([]boxpack.BoxTranslation, error) {
+	boxes := make([]boxpack.BoxTranslation, 0)
+	fp, err := os.Open(filename)
+	if err != nil {
+		return boxes, fmt.Errorf("error whilst trying to open (%s): %w", filename, err)
+	}
+	defer fp.Close()
+	atlasRegions, err := atlas.ParseAtlasFile(fp)
+	if err != nil {
+		return boxes, fmt.Errorf("error whilst trying to parse (%s): %w", filename, err)
+	}
+	return atlasToBoxes(imgRef, atlasRegions), nil
 }
 
 // converts atlasRegions type to []boxpack.BoxTranslation

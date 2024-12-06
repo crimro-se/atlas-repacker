@@ -196,9 +196,9 @@ func RenderNewAtlas(images []image.Image, boxes []BoxTranslation, outImg draw.Im
 			croppedBuffer := nrgba.SubImage(bufferRect)
 			rotatedImage := imaging.Rotate270(croppedBuffer)
 
-			draw.Draw(outImg, box.destRect, rotatedImage, image.Point{0, 0}, draw.Over)
+			draw.Draw(outImg, box.destRect, rotatedImage, image.Point{0, 0}, draw.Src)
 		} else {
-			draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Over)
+			draw.Draw(outImg, box.destRect, images[box.imgSrc], box.sourceRect.Min, draw.Src)
 		}
 	}
 }

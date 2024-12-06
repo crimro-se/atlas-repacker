@@ -12,7 +12,6 @@ import (
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
 	"github.com/crimro-se/atlas-repacker/internal/boxpack"
-	"github.com/crimro-se/atlas-repacker/internal/findislands"
 	_ "golang.org/x/image/webp"
 )
 
@@ -38,20 +37,16 @@ func main() {
 	// 2. Box Packing
 	//
 	images, err := loadAllImages(inputFiles)
-	errHandler(err, "An error occured whilst loading images.")
+	errHandler(err, "an error occured whilst loading images")
 
 	// find pixel islands via atlas file or look at the pixels.
 	var boxes []boxpack.BoxTranslation
-	// TODO: more complex loading logic that can handle a mix of files that include atlas files and others that don't
-	if flags.loadAtlas {
-		boxes, err = loadAllAtlas(atlas.FilepathsToDotAtlas(inputFiles))
-		errHandler(err, "An error occured whilst loading atlas files.")
-	} else {
-		boxes = rectsToBoxTranslation(findislands.ImagesToIslands(images, flags.checkDiagonals))
-	}
+	boxes, err = boxPack(images, inputFiles, flags)
+	errHandler(err)
 	if len(boxes) < 1 {
 		errHandler(errors.New("no pixel islands detected in the input image(s)"))
 	}
+
 	if flags.debug {
 		img := boxpack.DebugViewRects(boxes, images[0].Bounds().Dx(), images[0].Bounds().Dy(), true, 0)
 		errHandler(saveImage("debug.png", img))
@@ -116,6 +111,29 @@ func main() {
 
 	// exit status
 	os.Exit(errored)
+}
+
+func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]boxpack.BoxTranslation, error) {
+	boxes := make([]boxpack.BoxTranslation, 0, 8)
+	atlasFiles := atlas.FilepathsToDotAtlas(filenames)
+	for i, img := range images {
+		detectRequired := true // disabled if we successfully load from atlas.
+		if cfg.loadAtlas {
+			b, e := parseAtlasFile(atlasFiles[i], i)
+			if e == nil {
+				boxes = append(boxes, b...)
+				detectRequired = false
+			}
+		}
+		if detectRequired {
+			b, e := detectIslands(img, i, cfg.checkDiagonals)
+			if e != nil {
+				return boxes, e
+			}
+			boxes = append(boxes, b...)
+		}
+	}
+	return boxes, nil
 }
 
 // resolves the exact pixel offset to apply based on cli flags
