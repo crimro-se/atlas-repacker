@@ -106,7 +106,7 @@ func main() {
 	// 2.3 save output
 	//
 	outImg := image.NewNRGBA(image.Rect(0, 0, flags.width, flags.height))
-	boxpack.RenderNewAtlas(images, boxes, outImg)
+	boxpack.RenderAll(images, boxes, outImg)
 	errHandler(saveImage(flags.outputFileName, outImg))
 
 	// exit status

@@ -176,11 +176,12 @@ func PackBoxes(boxes []BoxTranslation, W, H, boxMargin, offset int) int {
 	return unpacked
 }
 
-// Creates a new atlas image based on the input images and packed boxes.
+// Creates a new image based on the input images and packed boxes.
 // typically used after ImageToBoxes and PackBoxes
-func RenderNewAtlas(images []image.Image, boxes []BoxTranslation, outImg draw.Image) {
+func RenderAll(images []image.Image, boxes []BoxTranslation, outImg draw.Image) {
 	dx, dy := getMaxSourceRectSizes(boxes)
-	nrgba := image.NewNRGBA(image.Rect(0, 0, dx, dy))
+	maxSide := max(dx, dy)
+	nrgba := image.NewNRGBA(image.Rect(0, 0, maxSide, maxSide))
 	for _, box := range boxes {
 		if box.deferredRotate {
 			// this has the bizzare implication that the source W & H need to be swapped first.
