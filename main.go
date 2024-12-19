@@ -20,6 +20,11 @@ func init() {
 	initFlags()
 }
 
+type NamedBox struct {
+	boxpack.BoxTranslation
+	Name string
+}
+
 func main() {
 	errored := 0
 	//
@@ -40,14 +45,15 @@ func main() {
 	errHandler(err, "an error occured whilst loading images")
 
 	// find pixel islands via atlas file or look at the pixels.
-	var boxes []boxpack.BoxTranslation
-	boxes, err = boxPack(images, inputFiles, flags)
+	var namedBoxes []NamedBox
+	namedBoxes, err = boxPack(images, inputFiles, flags)
 	errHandler(err)
-	if len(boxes) < 1 {
+	if len(namedBoxes) < 1 {
 		errHandler(errors.New("no pixel islands detected in the input image(s)"))
 	}
 
 	if flags.debug {
+		boxes := BoxpackSliceFromNamedBoxes(namedBoxes)
 		img := boxpack.DebugViewRects(boxes, images[0].Bounds().Dx(), images[0].Bounds().Dy(), true, 0)
 		errHandler(saveImage("debug.png", img))
 		msg("debug.png has been written")
@@ -57,17 +63,16 @@ func main() {
 	}
 
 	var unpacked int
-	unpacked = boxpack.PackBoxes(boxes, flags.width, flags.height, flags.margin, getOffset(flags))
-
+	unpacked = PackNamedBoxes(namedBoxes, flags.width, flags.height, flags.margin, getOffset(flags))
 	//
 	// 2.1 bruteforce w,h if requested
 	//
 	if flags.minimumSquareMode > 0 {
-		wh := (boxpack.EstimateOutputWH(boxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
-		unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
+		wh := (EstimateOutputWH(namedBoxes, flags.margin) / flags.minimumSquareMode) * flags.minimumSquareMode
+		unpacked = PackNamedBoxes(namedBoxes, wh, wh, flags.margin, getOffset(flags))
 		for unpacked > 0 {
 			wh += flags.minimumSquareMode
-			unpacked = boxpack.PackBoxes(boxes, wh, wh, flags.margin, getOffset(flags))
+			unpacked = PackNamedBoxes(namedBoxes, wh, wh, flags.margin, getOffset(flags))
 		}
 		flags.width = wh
 		flags.height = wh
@@ -79,13 +84,13 @@ func main() {
 	//     todo: double margin then backoff in a binary-search fashion
 	if flags.maximumMarginMode && unpacked == 0 {
 		// we need a clone of the boxes for our tests
-		boxes2 := make([]boxpack.BoxTranslation, len(boxes))
-		copy(boxes2, boxes)
+		boxes2 := make([]NamedBox, len(namedBoxes))
+		copy(boxes2, namedBoxes)
 		for unpacked == 0 {
 			flags.margin++
-			unpacked = boxpack.PackBoxes(boxes2, flags.width, flags.height, flags.margin, getOffset(flags))
+			unpacked = PackNamedBoxes(boxes2, flags.width, flags.height, flags.margin, getOffset(flags))
 			if unpacked == 0 {
-				boxes = boxes2
+				namedBoxes = boxes2
 			}
 		}
 		unpacked = 0
@@ -106,15 +111,16 @@ func main() {
 	// 2.3 save output
 	//
 	outImg := image.NewNRGBA(image.Rect(0, 0, flags.width, flags.height))
-	boxpack.RenderAll(images, boxes, outImg)
+	boxesTR := BoxpackSliceFromNamedBoxes(namedBoxes)
+	boxpack.RenderAll(images, boxesTR, outImg)
 	errHandler(saveImage(flags.outputFileName, outImg))
 
 	// exit status
 	os.Exit(errored)
 }
 
-func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]boxpack.BoxTranslation, error) {
-	boxes := make([]boxpack.BoxTranslation, 0, 8)
+func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]NamedBox, error) {
+	boxes := make([]NamedBox, 0, 8)
 	atlasFiles := atlas.FilepathsToDotAtlas(filenames)
 	for i, img := range images {
 		detectRequired := true // disabled if we successfully load from atlas.
@@ -130,7 +136,8 @@ func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]boxpack.B
 			if e != nil {
 				return boxes, e
 			}
-			boxes = append(boxes, b...)
+			nb := NamedBoxFromBoxpackSlice(b, nil)
+			boxes = append(boxes, nb...)
 		}
 	}
 	return boxes, nil
