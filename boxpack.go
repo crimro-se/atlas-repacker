@@ -12,7 +12,7 @@ func NamedBoxFromBoxpack(b boxpack.BoxTranslation, name string) NamedBox {
 
 // promotes a slice of boxpack.BoxTranslation to []NamedBox. names are optional and can be nil
 func NamedBoxFromBoxpackSlice(boxes []boxpack.BoxTranslation, names []string) []NamedBox {
-	namedBoxes := make([]NamedBox, 0)
+	namedBoxes := make([]NamedBox, 0, len(boxes))
 	if names != nil && len(names) != len(boxes) {
 		names = nil
 	}
@@ -29,7 +29,7 @@ func NamedBoxFromBoxpackSlice(boxes []boxpack.BoxTranslation, names []string) []
 
 // converts a slice of namedbox to a slice of boxpack.boxtranslation
 func BoxpackSliceFromNamedBoxes(boxes []NamedBox) []boxpack.BoxTranslation {
-	boxTR := make([]boxpack.BoxTranslation, 0)
+	boxTR := make([]boxpack.BoxTranslation, 0, len(boxes))
 	var box boxpack.BoxTranslation
 	for _, v := range boxes {
 		box = v.BoxTranslation
