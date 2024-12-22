@@ -11,6 +11,8 @@ type myFlags struct {
 	outputFileName                                      string
 	checkDiagonals, maximumMarginMode, loadAtlas, debug bool
 	width, height, margin, align, minimumSquareMode     int
+
+	atlasFilter string
 }
 
 func initFlags() {
@@ -19,19 +21,28 @@ func initFlags() {
 
 func getFlags() (myFlags, []string) {
 	var flags myFlags
-	flag.StringVar(&flags.outputFileName, "o", "output.png", "filename of output")
-	flag.BoolVar(&flags.loadAtlas, "atlas", false, "when set, loads pixel region information from .atlas files with same name")
-	flag.BoolVar(&flags.debug, "debug", false, "when set, writes a debug.png image demonstrating all detected/loaded islands")
+	flag.StringVar(&flags.outputFileName, "o", "output.png",
+		"Filename of output.")
+	flag.StringVar(&flags.outputFileName, "filter", "output.png",
+		"Comma seperated string of attachment names in the atlas file to allow.")
+	flag.BoolVar(&flags.loadAtlas, "atlas", false,
+		"When set, loads pixel region information from .atlas files with same name.")
+	flag.BoolVar(&flags.debug, "debug", false,
+		"When set, writes a debug.png image demonstrating all detected/loaded islands.")
 	flag.BoolVar(&flags.checkDiagonals, "diagonal", false,
-		"when set, diagonally adjacent pixels are considered connected during island detection.")
+		"When set, diagonally adjacent pixels are considered connected during island detection.")
 	flag.BoolVar(&flags.maximumMarginMode, "findmaxmargin", false,
-		"when set, will find the largest margin value for which all islands still fit in the output.")
+		"When set, will find the largest margin value for which all islands still fit in the output.")
 	flag.IntVar(&flags.minimumSquareMode, "findminsquare", 0,
 		"If set > 0, finds the smallest output image size for which w and h is a multiple of this value.")
-	flag.IntVar(&flags.width, "w", 512, "width of output image")
-	flag.IntVar(&flags.height, "h", 512, "height of output image")
-	flag.IntVar(&flags.margin, "margin", 1, "margin to use for each box")
-	flag.IntVar(&flags.align, "align", 1, "how to align a box within its margin?\n0 = top left, 1 = center, 2 = bottom right")
+	flag.IntVar(&flags.width, "w", 512,
+		"Width of output image.")
+	flag.IntVar(&flags.height, "h", 512,
+		"Height of output image.")
+	flag.IntVar(&flags.margin, "margin", 1,
+		"Margin to use for each box.")
+	flag.IntVar(&flags.align, "align", 1,
+		"How to align a box within its margin?\n0 = top left, 1 = center, 2 = bottom right.")
 
 	flag.Parse()
 	inputFiles := flag.Args()
