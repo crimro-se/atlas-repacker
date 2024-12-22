@@ -129,7 +129,7 @@ func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]NamedBox,
 			if e == nil {
 				// filter if required
 				if len(cfg.atlasFilter) > 0 {
-					boxes = namedBoxFilter(boxes, cfg.atlasFilter)
+					b = namedBoxFilter(b, cfg.atlasFilter)
 				}
 				boxes = append(boxes, b...)
 				detectRequired = false
