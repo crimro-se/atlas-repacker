@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/crimro-se/atlas-repacker/internal/atlas"
 	"github.com/crimro-se/atlas-repacker/internal/boxpack"
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
 func parseAtlasFile(filename string, imgRef int) ([]NamedBox, error) {
@@ -29,4 +31,16 @@ func atlasToBoxes(refImage int, ar atlas.AtlasRegions) []NamedBox {
 		boxes = append(boxes, NamedBoxFromBoxpack(boxpack.BoxFromRect(refImage, v.Rectangle, v.RotateRequired), name))
 	}
 	return boxes
+}
+
+// filters a slice of NamedBox to only contain the named members specified
+func namedBoxFilter(boxes []NamedBox, csv string) []NamedBox {
+	allowed := make([]NamedBox, 0)
+	whitelist := mapset.NewThreadUnsafeSet(strings.Split(csv, ",")...)
+	for _, box := range boxes {
+		if whitelist.Contains(box.Name) {
+			allowed = append(allowed, box)
+		}
+	}
+	return allowed
 }
