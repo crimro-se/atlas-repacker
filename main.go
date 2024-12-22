@@ -46,7 +46,7 @@ func main() {
 
 	// find pixel islands via atlas file or look at the pixels.
 	var namedBoxes []NamedBox
-	namedBoxes, err = boxPack(images, inputFiles, flags)
+	namedBoxes, err = loadOrDetectBoxes(images, inputFiles, flags)
 	errHandler(err)
 	if len(namedBoxes) < 1 {
 		errHandler(errors.New("no pixel islands detected in the input image(s)"))
@@ -119,7 +119,9 @@ func main() {
 	os.Exit(errored)
 }
 
-func boxPack(images []image.Image, filenames []string, cfg myFlags) ([]NamedBox, error) {
+// either detects pixel islands in images or loads the bounds from .atlas files, depending on
+// the specified flags
+func loadOrDetectBoxes(images []image.Image, filenames []string, cfg myFlags) ([]NamedBox, error) {
 	boxes := make([]NamedBox, 0, 8)
 	atlasFiles := atlas.FilepathsToDotAtlas(filenames)
 	for i, img := range images {
