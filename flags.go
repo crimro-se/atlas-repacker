@@ -23,7 +23,7 @@ func getFlags() (myFlags, []string) {
 	var flags myFlags
 	flag.StringVar(&flags.outputFileName, "o", "output.png",
 		"Filename of output.")
-	flag.StringVar(&flags.outputFileName, "filter", "output.png",
+	flag.StringVar(&flags.atlasFilter, "filter", "output.png",
 		"Comma seperated string of attachment names in the atlas file to allow.")
 	flag.BoolVar(&flags.loadAtlas, "atlas", false,
 		"When set, loads pixel region information from .atlas files with same name.")
