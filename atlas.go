@@ -34,11 +34,20 @@ func atlasToBoxes(refImage int, ar atlas.AtlasRegions) []NamedBox {
 }
 
 // filters a slice of NamedBox to only contain the named members specified
+// case insensitive
 func namedBoxFilter(boxes []NamedBox, csv string) []NamedBox {
 	allowed := make([]NamedBox, 0)
-	whitelist := mapset.NewThreadUnsafeSet(strings.Split(csv, ",")...)
+
+	// csv to lower then to set
+	words := strings.Split(csv, ",")
+	for i := range words {
+		words[i] = strings.ToLower(words[i])
+	}
+	whitelist := mapset.NewThreadUnsafeSet(words...)
+
+	// actually filter
 	for _, box := range boxes {
-		if whitelist.Contains(box.Name) {
+		if whitelist.Contains(strings.ToLower(box.Name)) {
 			allowed = append(allowed, box)
 		}
 	}

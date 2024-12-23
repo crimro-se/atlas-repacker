@@ -33,26 +33,28 @@ I'll add binaries when the project matures.
 atlas-repacker [flags] [input.png] [input2.png ...]
 Flags:
   -align int
-        how to align a box within its margin?
-        0 = top left, 1 = center, 2 = bottom right (default 1)
+        How to align a box within its margin?
+        0 = top left, 1 = center, 2 = bottom right. (default 1)
   -atlas
-        when set, loads pixel region information from .atlas files with same name
+        When set, loads pixel region information from .atlas files with same name.
   -debug
-        when set, writes a debug.png image demonstrating all detected/loaded islands
+        When set, writes a debug.png image demonstrating all detected/loaded islands.
   -diagonal
-        when set, diagonally adjacent pixels are considered connected during island detection.
+        When set, diagonally adjacent pixels are considered connected during island detection.
+  -filter string
+        Comma separated string of attachment names in the atlas file to allow. Case insensitive.
   -findmaxmargin
-        when set, will find the largest margin value for which all islands still fit in the output.
+        When set, will find the largest margin value for which all islands still fit in the output.
   -findminsquare int
         If set > 0, finds the smallest output image size for which w and h is a multiple of this value.
   -h int
-        height of output image (default 512)
+        Height of output image. (default 512)
   -margin int
-        margin to use for each box (default 1)
+        Margin to use for each box. (default 1)
   -o string
-        filename of output (default "output.png")
+        Filename of output. (default "output.png")
   -w int
-        width of output image (default 512)
+        Width of output image. (default 512)
 ```
 
 ## Batch Processing Example
